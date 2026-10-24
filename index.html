@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electricity Bill Calculator - Servlet | WT Assignment 3</title>
+  <meta name="description" content="Electricity Bill Calculator using Java Servlet - WT Assignment 3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- Animated background particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <div class="logo">⚡</div>
+        <div>
+          <h1 class="header-title">Electricity Bill Calculator</h1>
+          <p class="header-sub">Java Servlet Implementation • WT Assignment 3</p>
+        </div>
+      </div>
+      <span class="badge">Servlet</span>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-grid">
+      <!-- Input Form Card -->
+      <div class="card card-form">
+        <div class="card-header">
+          <span class="dot dot-green"></span>
+          <span class="card-label">Consumer Details</span>
+        </div>
+
+        <form id="billForm" onsubmit="return calculateBill(event)">
+          <div class="form-group">
+            <label for="consumerName">Consumer Name</label>
+            <input type="text" id="consumerName" placeholder="e.g. Aditya Wagh" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="consumerNo">Consumer No.</label>
+              <input type="text" id="consumerNo" placeholder="e.g. MH-2024-001" required>
+            </div>
+            <div class="form-group">
+              <label for="meterNo">Meter No.</label>
+              <input type="text" id="meterNo" placeholder="e.g. MTR-56789" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="prevReading">Previous Reading (kWh)</label>
+              <input type="number" id="prevReading" placeholder="e.g. 1200" min="0" required>
+            </div>
+            <div class="form-group">
+              <label for="currReading">Current Reading (kWh)</label>
+              <input type="number" id="currReading" placeholder="e.g. 1450" min="0" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="billMonth">Billing Month</label>
+            <input type="month" id="billMonth" required>
+          </div>
+
+          <div class="form-group">
+            <label for="category">Consumer Category</label>
+            <select id="category">
+              <option value="residential">🏠 Residential</option>
+              <option value="commercial">🏢 Commercial</option>
+              <option value="industrial">🏭 Industrial</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn-calculate" id="calcBtn">
+            <span class="btn-text">⚡ Calculate Bill</span>
+            <span class="btn-loading" style="display:none">Computing...</span>
+          </button>
+        </form>
+
+        <!-- Slab Info -->
+        <div class="slab-info">
+          <div class="slab-title">📊 Tariff Slabs (Residential)</div>
+          <div class="slab-grid">
+            <div class="slab-item"><span>0 – 100 kWh</span><span class="slab-rate">₹3.50/unit</span></div>
+            <div class="slab-item"><span>101 – 300 kWh</span><span class="slab-rate">₹5.50/unit</span></div>
+            <div class="slab-item"><span>301 – 500 kWh</span><span class="slab-rate">₹7.00/unit</span></div>
+            <div class="slab-item"><span>Above 500 kWh</span><span class="slab-rate">₹8.50/unit</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Result Card -->
+      <div class="card card-result" id="resultCard" style="display:none">
+        <div class="card-header">
+          <span class="dot dot-amber"></span>
+          <span class="card-label">Bill Summary</span>
+        </div>
+
+        <div class="bill-header">
+          <div class="bill-icon">⚡</div>
+          <div class="bill-total-label">Total Amount</div>
+          <div class="bill-total" id="totalAmount">₹0.00</div>
+          <div class="bill-due" id="dueDate"></div>
+        </div>
+
+        <div class="bill-details">
+          <div class="bill-row">
+            <span>Consumer Name</span>
+            <span id="rName">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Consumer No.</span>
+            <span id="rConsumerNo">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Meter No.</span>
+            <span id="rMeterNo">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Billing Period</span>
+            <span id="rPeriod">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Category</span>
+            <span id="rCategory">—</span>
+          </div>
+          <div class="bill-divider"></div>
+          <div class="bill-row">
+            <span>Previous Reading</span>
+            <span id="rPrev">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Current Reading</span>
+            <span id="rCurr">—</span>
+          </div>
+          <div class="bill-row highlight">
+            <span>Units Consumed</span>
+            <span id="rUnits">—</span>
+          </div>
+          <div class="bill-divider"></div>
+
+          <div class="bill-section-title">Slab Breakdown</div>
+          <div id="slabBreakdown"></div>
+
+          <div class="bill-divider"></div>
+          <div class="bill-row">
+            <span>Energy Charge</span>
+            <span id="rEnergy">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Fixed Charge</span>
+            <span id="rFixed">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Electricity Duty (10%)</span>
+            <span id="rDuty">—</span>
+          </div>
+          <div class="bill-row">
+            <span>Fuel Surcharge (2%)</span>
+            <span id="rFuel">—</span>
+          </div>
+          <div class="bill-divider"></div>
+          <div class="bill-row total">
+            <span>Total Payable</span>
+            <span id="rTotal">—</span>
+          </div>
+        </div>
+
+        <button class="btn-print" onclick="window.print()">🖨️ Print Bill</button>
+        <button class="btn-reset" onclick="resetForm()">↺ New Calculation</button>
+      </div>
+
+      <!-- Servlet Code Card -->
+      <div class="card card-code" id="codeCard">
+        <div class="card-header">
+          <span class="dot dot-purple"></span>
+          <span class="card-label">Java Servlet Code</span>
+        </div>
+        <div class="code-tabs">
+          <button class="code-tab active" onclick="showTab('servlet')">ElectricityBillServlet.java</button>
+          <button class="code-tab" onclick="showTab('webxml')">web.xml</button>
+        </div>
+        <pre class="code-block" id="servletCode"><code>import java.io.*;
+import javax.servlet.*;
+import javax.servlet.http.*;
+
+public class ElectricityBillServlet extends HttpServlet {
+
+    protected void doPost(HttpServletRequest request,
+                          HttpServletResponse response)
+            throws ServletException, IOException {
+
+        // Read parameters from form
+        String name = request.getParameter("consumerName");
+        String consumerNo = request.getParameter("consumerNo");
+        String meterNo = request.getParameter("meterNo");
+        int prevReading = Integer.parseInt(
+            request.getParameter("prevReading"));
+        int currReading = Integer.parseInt(
+            request.getParameter("currReading"));
+        String category = request.getParameter("category");
+
+        int units = currReading - prevReading;
+
+        // Calculate energy charge based on slabs
+        double energyCharge = 0;
+        if (category.equals("residential")) {
+            energyCharge = calcResidential(units);
+        } else if (category.equals("commercial")) {
+            energyCharge = calcCommercial(units);
+        } else {
+            energyCharge = calcIndustrial(units);
+        }
+
+        double fixedCharge = getFixedCharge(category);
+        double duty = energyCharge * 0.10;
+        double fuelSurcharge = energyCharge * 0.02;
+        double total = energyCharge + fixedCharge
+                       + duty + fuelSurcharge;
+
+        // Send response
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.println("&lt;h2&gt;Electricity Bill&lt;/h2&gt;");
+        out.println("&lt;p&gt;Name: " + name + "&lt;/p&gt;");
+        out.println("&lt;p&gt;Units: " + units + "&lt;/p&gt;");
+        out.println("&lt;p&gt;Total: ₹" +
+            String.format("%.2f", total) + "&lt;/p&gt;");
+        out.close();
+    }
+
+    private double calcResidential(int u) {
+        double c = 0;
+        if (u <= 100) c = u * 3.50;
+        else if (u <= 300) c = 100*3.50 + (u-100)*5.50;
+        else if (u <= 500) c = 100*3.50 + 200*5.50
+                              + (u-300)*7.00;
+        else c = 100*3.50 + 200*5.50 + 200*7.00
+                 + (u-500)*8.50;
+        return c;
+    }
+
+    private double calcCommercial(int u) {
+        return u * 8.00;
+    }
+
+    private double calcIndustrial(int u) {
+        return u * 7.50;
+    }
+
+    private double getFixedCharge(String cat) {
+        switch (cat) {
+            case "residential": return 50;
+            case "commercial": return 200;
+            case "industrial": return 350;
+            default: return 50;
+        }
+    }
+}</code></pre>
+        <pre class="code-block" id="webxmlCode" style="display:none"><code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         version="4.0"&gt;
+
+    &lt;servlet&gt;
+        &lt;servlet-name&gt;ElectricityBillServlet&lt;/servlet-name&gt;
+        &lt;servlet-class&gt;
+            ElectricityBillServlet
+        &lt;/servlet-class&gt;
+    &lt;/servlet&gt;
+
+    &lt;servlet-mapping&gt;
+        &lt;servlet-name&gt;ElectricityBillServlet&lt;/servlet-name&gt;
+        &lt;url-pattern&gt;/calculateBill&lt;/url-pattern&gt;
+    &lt;/servlet-mapping&gt;
+
+    &lt;welcome-file-list&gt;
+        &lt;welcome-file&gt;index.html&lt;/welcome-file&gt;
+    &lt;/welcome-file-list&gt;
+
+&lt;/web-app&gt;</code></pre>
+      </div>
+    </main>
+
+    <footer class="footer">
+      WT Assignment 3 &nbsp;|&nbsp; Electricity Bill Calculator &nbsp;|&nbsp; Java Servlet &nbsp;|&nbsp; WET TY Batch 26
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
